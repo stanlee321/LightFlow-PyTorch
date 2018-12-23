@@ -1,14 +1,15 @@
 import torch
 import torch.nn as nn
 
-# Import utils
-from tools import *
+# import utils
+from utils.modelutils import *
 
 class LightFlow(nn.Module):
     def __init__(self, in_channels=6):
         super(LightFlow, self).__init__()
 
         # Encoder Network
+        
         self.conv1 = DWConv(in_channels, 32, 2)
         self.conv2 = DWConv(32, 64, 2)
         self.conv3 = DWConv(64, 128, 2)
