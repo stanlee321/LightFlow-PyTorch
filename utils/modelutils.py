@@ -33,14 +33,6 @@ class DWConv(nn.Module):
         x = self.dwconv(x)
         return x
 
-class UP(nn.Module):
-    def __init__(self, scale=2, bilinear=True):
-        super(UP, self).__init__()
-        #  would be a nice idea if the upsampling could be learned too,
-        #  but my machine do not have enough memory to handle all those weights
-    def forward(self, x, scale):
-        x = F.interpolate(x, scale_factor = scale, mode='bilinear', align_corners=True )
-        return x
 
 class Average(nn.Module):
     """

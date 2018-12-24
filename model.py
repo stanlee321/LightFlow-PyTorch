@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
+import numpy as np
 # import utils
 from utils.modelutils import *
 
@@ -38,14 +39,11 @@ class LightFlow(nn.Module):
         self.conv15 = DWConv(32, 2, 1, self.batchNorm)
         self.conv16 = DWConv(16, 2, 1, self.batchNorm)
 
-        # Up Sampling operation
-        self.up = UP()
-
         # Average layer
         self.average = Average()
 
-    def forward(self, inputs):
-        rgb_mean = inputs.contiguous().view(inputs.size()[:2]+(-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
+    def forward(self,  inputs):
+        rgb_mean = inputs.contiguous().view(inputs.size()[:2] + (-1,)).mean(dim=-1).view(inputs.size()[:2] + (1,1,1,))
         
         x = (inputs - rgb_mean) / self.rgb_max
         x1 = x[:,:,0,:,:]
@@ -67,25 +65,26 @@ class LightFlow(nn.Module):
         conv7 = self.conv7(conv6b)
         
         # 1st Up Sampling and Concat
-        conv7_x2 = self.up(conv7, 2)
+        conv7_x2 = F.interpolate(conv7, scale_factor = 2, mode='nearest')
+
         concat_1 = torch.cat([conv7_x2, conv5b], dim=1)
 
         conv8 = self.conv8(concat_1)
         
         # 2nd Up Sampling and Concat
-        conv8_x2 = self.up(conv8, 2)
+        conv8_x2 = F.interpolate(conv8, scale_factor = 2, mode='nearest')
         concat_2 = torch.cat([conv8_x2, conv4b], dim=1)
 
         conv9 = self.conv9(concat_2)
 
         # 3rth Up Sampling and Concat
-        conv9_x2 = self.up(conv9, 2)
+        conv9_x2 =  F.interpolate(conv9, scale_factor = 2, mode='nearest')
         concat_3 = torch.cat([conv9_x2, conv3], dim=1)
 
         conv10 = self.conv10(concat_3)
 
         # 4rth Up Sampling and Concat
-        conv10_x2 = self.up(conv10, 2)
+        conv10_x2 = F.interpolate(conv10, scale_factor = 2, mode='nearest')
         concat_4 = torch.cat([conv10_x2, conv2], dim=1)
 
         conv11 = self.conv11(concat_4)
@@ -98,24 +97,12 @@ class LightFlow(nn.Module):
         conv15 = self.conv15(conv10)
         conv16 = self.conv16(conv11)
 
-        conv12_x16 = self.up(conv12, 16)
-        conv13_x8  = self.up(conv13, 8)
-        conv14_x4  = self.up(conv14, 4)
-        conv15_x2 = self.up(conv15, 2)
-
-        print(conv12_x16.shape)
-        print(conv13_x8.shape)
-        print(conv14_x4.shape)
-        print(conv15_x2.shape)
-        print(conv16.shape)
+        conv12_x16 =  F.interpolate(conv12, scale_factor = 16, mode='nearest') 
+        conv13_x8  =  F.interpolate(conv13, scale_factor = 8, mode='nearest') 
+        conv14_x4  =  F.interpolate(conv14, scale_factor = 4, mode='nearest')
+        conv15_x2  =  F.interpolate(conv15, scale_factor = 2, mode='nearest')
 
         average = self.average([conv12_x16, conv13_x8, conv14_x4, conv15_x2, conv16])
-        return average
 
-if __name__ == "__main__":
-    class Args:
-        def __init__(self):
-            self.rgb_max = 10
-    args = Args()
-    model = LightFlow(args)
-    print(model)
+        #average =  F.interpolate(average, scale_factor = 4, mode='nearest')
+        return average

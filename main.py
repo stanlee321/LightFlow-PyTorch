@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from tensorboardX import SummaryWriter
@@ -41,7 +42,7 @@ if __name__ == '__main__':
         '--crop_size',
         type=int,
         nargs='+',
-        default=[256, 256],
+        default=[384,512], #[256, 256],
         help="Spatial dimension to crop training samples for training")
     parser.add_argument('--gradient_clip', type=float, default=None)
     parser.add_argument(
@@ -296,8 +297,16 @@ if __name__ == '__main__':
                 self.loss = args.loss_class(args, **kwargs)
 
             def forward(self, data, target, inference=False):
+                # Get the forward pass
                 output = self.model(data)
+                
+                #
+                # Reshape the target resolution to the ouput spatial resolution
+                #
+                output_size = (list(output.size())[2], list(output.size())[3])
+                target = F.interpolate(target, size=output_size, mode='nearest')
 
+                # Get loss values
                 loss_values = self.loss(output, target)
 
                 if not inference:
