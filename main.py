@@ -20,6 +20,7 @@ import datasets
 import losses
 import model
 from utils import flow_utils, tools
+from .utils.flowlib import flow_to_image
 
 # fp32 copy of parameters for update
 global param_copy
@@ -299,13 +300,31 @@ if __name__ == '__main__':
             def forward(self, data, target, inference=False):
                 # Get the forward pass
                 output = self.model(data)
-                
+
                 #
                 # Reshape the target resolution to the ouput spatial resolution
                 #
                 output_size = (list(output.size())[2], list(output.size())[3])
                 target = F.interpolate(target, size=output_size, mode='nearest')
 
+                # TODO put flow predicionts into TensorBoardX
+                """
+                # Show the generated flow in TensorBoard
+                pred_flow_0 = output[0, :, :, :]
+                pred_flow_0 = flow_to_image(pred_flow_0 np.uint8)
+
+                pred_flow_1 = output[1, :, :, :]
+                pred_flow_1 = flow_to_image(pred_flow_1, tf.uint8)
+                pred_flow_img = tf.stack([pred_flow_0, pred_flow_1], 0)
+                tf.summary.image('pred_flow', pred_flow_img, max_outputs=2)
+
+                true_flow_0 = flow[0, :, :, :]
+                true_flow_0 = tf.py_func(flow_to_image, [true_flow_0], tf.uint8)
+                true_flow_1 = flow[1, :, :, :]
+                true_flow_1 = tf.py_func(flow_to_image, [true_flow_1], tf.uint8)
+                true_flow_img = tf.stack([true_flow_0, true_flow_1], 0)
+                tf.summary.image('true_flow', true_flow_img, max_outputs=2)
+                """
                 # Get loss values
                 loss_values = self.loss(output, target)
 
