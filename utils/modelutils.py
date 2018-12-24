@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-
+import torch.nn.functional as F
 class DWConv(nn.Module):
     def __init__(self, inp, oup, stride, batchnorm=True):
         super(DWConv, self).__init__()
@@ -36,15 +36,10 @@ class DWConv(nn.Module):
 class UP(nn.Module):
     def __init__(self, scale=2, bilinear=True):
         super(UP, self).__init__()
-        self.scale = scale
         #  would be a nice idea if the upsampling could be learned too,
         #  but my machine do not have enough memory to handle all those weights
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=self.scale, mode='bilinear', align_corners=True)
-
     def forward(self, x, scale):
-        self.scale = scale
-        x = self.up(x)
+        x = F.interpolate(x, scale_factor = scale, mode='bilinear', align_corners=True )
         return x
 
 class Average(nn.Module):

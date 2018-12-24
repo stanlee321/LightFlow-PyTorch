@@ -8,7 +8,6 @@ class LightFlow(nn.Module):
     def __init__(self, args, batchNorm=True, div_flow = 20, in_channels=6):
         super(LightFlow, self).__init__()
 
-        print('args are', args)
         self.rgb_max = args.rgb_max
         self.batchNorm = batchNorm
         # Encoder Network
@@ -109,10 +108,14 @@ class LightFlow(nn.Module):
         print(conv14_x4.shape)
         print(conv15_x2.shape)
         print(conv16.shape)
-        
+
         average = self.average([conv12_x16, conv13_x8, conv14_x4, conv15_x2, conv16])
         return average
 
 if __name__ == "__main__":
-    model = LightFlow()
+    class Args:
+        def __init__(self):
+            self.rgb_max = 10
+    args = Args()
+    model = LightFlow(args)
     print(model)

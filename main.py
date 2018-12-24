@@ -143,7 +143,8 @@ if __name__ == '__main__':
         torch.optim,
         argument_for_class='optimizer',
         default='Adam',
-        skip_params=['params'])
+        skip_params=['params'],
+        parameter_defaults={'weight_decay': 0.00004})
 
     tools.add_arguments_for_module(
         parser,
@@ -530,7 +531,7 @@ if __name__ == '__main__':
         if args.save_flow or args.render_validation:
             flow_folder = "{}/{}.epoch-{}-flow-field".format(
                 args.inference_dir, args.name.replace('/', '.'), epoch)
-            if not osp.osp.exists(flow_folder):
+            if not osp.exists(flow_folder):
                 os.makedirs(flow_folder)
 
         args.inference_n_batches = np.inf if args.inference_n_batches < 0 else args.inference_n_batches
