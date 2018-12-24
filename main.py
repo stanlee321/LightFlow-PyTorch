@@ -359,7 +359,7 @@ if __name__ == '__main__':
             block.log("Random initialization")
 
         block.log("Initializing save directory: {}".format(args.save))
-        if not osp.osp.exists(args.save):
+        if not osp.exists(args.save):
             os.makedirs(args.save)
 
         train_logger = SummaryWriter(
