@@ -104,6 +104,12 @@ class LightFlow(nn.Module):
         conv14_x4  = self.up(conv14, 4)
         conv15_x2 = self.up(conv15, 2)
 
+        print(conv12_x16.shape)
+        print(conv13_x8.shape)
+        print(conv14_x4.shape)
+        print(conv15_x2.shape)
+        print(conv16.shape)
+        
         average = self.average([conv12_x16, conv13_x8, conv14_x4, conv15_x2, conv16])
         return average
 
