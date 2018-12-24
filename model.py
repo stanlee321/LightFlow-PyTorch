@@ -61,7 +61,7 @@ class LightFlow(nn.Module):
         conv4b = self.conv4b(conv4a)
         conv5a = self.conv5a(conv4b)
         conv5b = self.conv5b(conv5a)
-        conv6a = self.con6a(conv5b)
+        conv6a = self.conv6a(conv5b)
         conv6b = self.conv6b(conv6a)
 
         ##### Decoder #####
