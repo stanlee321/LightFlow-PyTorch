@@ -286,10 +286,10 @@ if __name__ == '__main__':
     with tools.TimerBlock("Building {} model".format(args.model)) as block:
 
         class ModelAndLoss(nn.Module):
-
             def __init__(self, args):
                 super(ModelAndLoss, self).__init__()
                 kwargs = tools.kwargs_from_args(args, 'model')
+                print(kwargs)
                 self.model = args.model_class(args, **kwargs)
                 kwargs = tools.kwargs_from_args(args, 'loss')
                 self.loss = args.loss_class(args, **kwargs)

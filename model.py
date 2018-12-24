@@ -5,9 +5,11 @@ import torch.nn as nn
 from utils.modelutils import *
 
 class LightFlow(nn.Module):
-    def __init__(self, in_channels=6):
+    def __init__(self, args, batchNorm=False, div_flow = 20, in_channels=6):
         super(LightFlow, self).__init__()
 
+        print('args are', args)
+        self.rgb_max = args.rgb_max
         # Encoder Network
         
         self.conv1 = DWConv(in_channels, 32, 2)
