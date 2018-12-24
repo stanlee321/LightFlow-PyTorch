@@ -5,38 +5,39 @@ import torch.nn as nn
 from utils.modelutils import *
 
 class LightFlow(nn.Module):
-    def __init__(self, args, batchNorm=False, div_flow = 20, in_channels=6):
+    def __init__(self, args, batchNorm=True, div_flow = 20, in_channels=6):
         super(LightFlow, self).__init__()
 
         print('args are', args)
         self.rgb_max = args.rgb_max
+        self.batchNorm = batchNorm
         # Encoder Network
         
-        self.conv1 = DWConv(in_channels, 32, 2)
-        self.conv2 = DWConv(32, 64, 2)
-        self.conv3 = DWConv(64, 128, 2)
-        self.conv4a = DWConv(128, 256, 2)
-        self.conv4b = DWConv(256, 256, 1)
-        self.conv5a = DWConv(256, 512, 2)
-        self.conv5b = DWConv(512, 512, 1)
-        self.conv6a = DWConv(512, 1024, 2)
-        self.conv6b = DWConv(1024, 1024, 1)
+        self.conv1 = DWConv(in_channels, 32, 2, self.batchNorm)
+        self.conv2 = DWConv(32, 64, 2, self.batchNorm)
+        self.conv3 = DWConv(64, 128, 2, self.batchNorm)
+        self.conv4a = DWConv(128, 256, 2, self.batchNorm)
+        self.conv4b = DWConv(256, 256, 1, self.batchNorm)
+        self.conv5a = DWConv(256, 512, 2,self.batchNorm)
+        self.conv5b = DWConv(512, 512, 1, self.batchNorm)
+        self.conv6a = DWConv(512, 1024, 2, self.batchNorm)
+        self.conv6b = DWConv(1024, 1024, 1, self.batchNorm)
 
         # Decoder Network
 
-        self.conv7 = DWConv(1024, 256, 1)
-        self.conv8 = DWConv(768, 128, 1)
-        self.conv9 = DWConv(384, 64, 1)
-        self.conv10 = DWConv(192, 32, 1)
-        self.conv11 = DWConv(96, 16, 1)
+        self.conv7 = DWConv(1024, 256, 1, self.batchNorm)
+        self.conv8 = DWConv(768, 128, 1, self.batchNorm)
+        self.conv9 = DWConv(384, 64, 1, self.batchNorm)
+        self.conv10 = DWConv(192, 32, 1, self.batchNorm)
+        self.conv11 = DWConv(96, 16, 1, self.batchNorm)
 
         # Optical Flow Predictions
 
-        self.conv12 = DWConv(256, 2, 1)
-        self.conv13 = DWConv(128, 2, 1)
-        self.conv14 = DWConv(64, 2, 1)
-        self.conv15 = DWConv(32, 2, 1)
-        self.conv16 = DWConv(16, 2, 1)
+        self.conv12 = DWConv(256, 2, 1, self.batchNorm)
+        self.conv13 = DWConv(128, 2, 1, self.batchNorm)
+        self.conv14 = DWConv(64, 2, 1, self.batchNorm)
+        self.conv15 = DWConv(32, 2, 1, self.batchNorm)
+        self.conv16 = DWConv(16, 2, 1, self.batchNorm)
 
         # Up Sampling operation
         self.up = UP()

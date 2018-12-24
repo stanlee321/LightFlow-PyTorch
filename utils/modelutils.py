@@ -2,20 +2,32 @@ import torch.nn as nn
 import torch
 
 class DWConv(nn.Module):
-    def __init__(self, inp, oup, stride):
+    def __init__(self, inp, oup, stride, batchnorm=True):
         super(DWConv, self).__init__()
 
-        self.dwconv =  nn.Sequential(
-            # DepthWise Convolution
-            nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
-            nn.BatchNorm2d(inp),
-            nn.ReLU(inplace=True),
+        if batchnorm:
             
-            # PointWise Convolution
-            nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(oup),
-            nn.ReLU(inplace=True),
-        )
+            self.dwconv =  nn.Sequential(
+                # DepthWise Convolution
+                nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+                nn.BatchNorm2d(inp),
+                nn.LeakyReLU(0.1,inplace=True),
+                
+                # PointWise Convolution
+                nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+                nn.LeakyReLU(0.1,inplace=True),
+            )
+        else:
+            self.dwconv =  nn.Sequential(
+                # DepthWise Convolution
+                nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+                nn.LeakyReLU(0.1,inplace=True),
+                
+                # PointWise Convolution
+                nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                nn.LeakyReLU(0.1,inplace=True),
+            )
 
     def forward(self, x):
         x = self.dwconv(x)
