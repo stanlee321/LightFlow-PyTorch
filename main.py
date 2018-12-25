@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--resume',
-        default='',
+        default='./work',
         type=str,
         metavar='PATH',
         help='path to latest checkpoint (default: none)')
