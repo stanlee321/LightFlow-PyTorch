@@ -12,3 +12,4 @@ colorama==0.3.7
 setproctitle
 pytz
 protobuf
+pypng

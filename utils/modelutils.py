@@ -6,7 +6,6 @@ class DWConv(nn.Module):
         super(DWConv, self).__init__()
 
         if batchnorm:
-            
             self.dwconv =  nn.Sequential(
                 # DepthWise Convolution
                 nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),

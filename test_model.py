@@ -1,8 +1,9 @@
 import unittest
 import torch
+from tensorboardX import SummaryWriter
 import torch.nn.functional as F
 from model import LightFlow
-
+import numpy as np
 
 class Args:
     def __init__(self):
@@ -36,14 +37,16 @@ if __name__ == "__main__":
 
     print(image_a.shape)
     print(image_b.shape)
-
-    model = LightFlow(args)
-
-    outputs = model(image_a.float(), image_b.float())
-    output_size = (list(outputs.size())[2], list(outputs.size())[3])
     
-    target = F.interpolate(image_a, size=output_size, mode='nearest')
+    with SummaryWriter(comment='LightFlow') as w:
+        model = LightFlow(args)
+        # Forward pass
+        
+        outputs = model(image_a.float(), image_b.float())
+        output_size = (list(outputs.size())[2], list(outputs.size())[3])
+        target = F.interpolate(image_a, size=output_size, mode='nearest')
 
-    print('outputshape', target.shape)
+        w.add_graph(model, (image_a.float(), image_b.float()), verbose=True)
+        print('outputshape', target.shape)
 
     #print(model)

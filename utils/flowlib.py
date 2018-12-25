@@ -8,10 +8,12 @@
 # ==============================
 """
 import png
+import io
 import numpy as np
 import matplotlib.colors as cl
 import matplotlib.pyplot as plt
 from PIL import Image
+from torchvision.transforms import ToTensor
 
 
 UNKNOWN_FLOW_THRESH = 1e7
@@ -277,16 +279,20 @@ def flow_to_image(flow):
     return np.uint8(img)
 
 
-def gen_plot(flow):
+def gen_plot_buf(flow):
     image = flow_to_image(flow)
     """Create a pyplot plot and save to buffer."""
     plt.figure()
-    plt.plot([1, 2])
+    plt.plot(image)
     plt.title("test")
     buf = io.BytesIO()
     plt.savefig(buf, format='jpeg')
     buf.seek(0)
-    return buf
+
+    image = Image.open(buf)
+    image = ToTensor()(image).unsqueeze(0)
+
+    return image
 
 
 
