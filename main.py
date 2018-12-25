@@ -86,11 +86,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--render_validation',
         action='store_true',
+        default=True,
         help=
         'run inference (save flows to file) and every validation_frequency epoch'
     )
 
-    parser.add_argument('--inference', action='store_true')
+    parser.add_argument('--inference', default=True, action='store_true')
     parser.add_argument(
         '--inference_size',
         type=int,
@@ -104,11 +105,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save_flow',
         action='store_true',
+        default=True,
         help='save predicted flows to file')
 
     parser.add_argument(
         '--resume',
-        default='./work',
+        default='./work/LightFlow_train-checkpoint.pth.tar',
         type=str,
         metavar='PATH',
         help='path to latest checkpoint (default: none)')
@@ -116,7 +118,7 @@ if __name__ == '__main__':
         '--log_frequency',
         '--summ_iter',
         type=int,
-        default=1,
+        default=10,
         help="Log every n batches")
 
     parser.add_argument('--skip_training', action='store_true')
@@ -309,36 +311,36 @@ if __name__ == '__main__':
 
                 # TODO put flow predicionts into TensorBoardX
                 
-                if inference :
-                        
-                    # Show the Pred flow in TensorBoard
-                    pred_flow_0 = output[0, :, :, :]
-                    pred_flow_0 = flow_to_image(pred_flow_0)
-
-                    pred_flow_1 = output[1, :, :, :]
-                    pred_flow_1 = flow_to_image(pred_flow_1)
+            
                     
-                    pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
+                # Show the Pred flow in TensorBoard
+                pred_flow_0 = output[0, :, :, :]
+                pred_flow_0 = flow_to_image(pred_flow_0)
 
-                    pred_flow_img_buf = gen_plot_buf(pred_flow_img)
+                pred_flow_1 = output[1, :, :, :]
+                pred_flow_1 = flow_to_image(pred_flow_1)
+                
+                pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
 
-
-                    # Flow the True Flow 
-                    true_flow_0 = target[0, :, :, :]
-                    true_flow_0 = flow_to_image(true_flow_0)
-
-                    true_flow_1 = target[1, :, :, :]
-                    true_flow_1 = flow_to_image(true_flow_1)
-                    true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
+                pred_flow_img_buf = gen_plot_buf(pred_flow_img)
 
 
+                # Flow the True Flow 
+                true_flow_0 = target[0, :, :, :]
+                true_flow_0 = flow_to_image(true_flow_0)
 
-                    writer = SummaryWriter(log_dir=osp.join(args.save, 'validation'), comment='Images')
+                true_flow_1 = target[1, :, :, :]
+                true_flow_1 = flow_to_image(true_flow_1)
+                true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
 
-                    writer.add_image('pred_flow', pred_flow_img_buf, 2)
-                    writer.add_image('true_flow', true_flow_img, 2)
 
-                    
+
+                writer = SummaryWriter(log_dir=osp.join(args.save, 'validation'), comment='Images')
+
+                writer.add_image('pred_flow', pred_flow_img_buf, 2)
+                writer.add_image('true_flow', true_flow_img, 2)
+
+
                 # Get loss values
                 loss_values = self.loss(output, target)
 
@@ -676,18 +678,20 @@ if __name__ == '__main__':
                 best_err = validation_loss
                 is_best = True
 
-            checkpoint_progress = tqdm(
-                ncols=100, desc='Saving Checkpoint', position=offset)
-            tools.save_checkpoint({
-                'arch':
-                args.model,
-                'epoch':
-                epoch,
-                'state_dict':
-                model_and_loss.module.model.state_dict(),
-                'best_EPE':
-                best_err
-            }, is_best, args.save, args.model)
+            checkpoint_progress = tqdm(ncols=100, 
+                                    desc='Saving Checkpoint', 
+                                    position=offset)
+            tools.save_checkpoint(
+                {
+                    'arch': args.model,
+                    'epoch': epoch,
+                    'state_dict': model_and_loss.module.model.state_dict(),
+                    'best_EPE': best_err
+                }, 
+                is_best, 
+                args.save,
+                args.model
+            )
             checkpoint_progress.update(1)
             checkpoint_progress.close()
             offset += 1
@@ -707,8 +711,9 @@ if __name__ == '__main__':
 
             # save checkpoint after every validation_frequency number of epochs
             if ((epoch - 1) % args.validation_frequency) == 0:
-                checkpoint_progress = tqdm(
-                    ncols=100, desc='Saving Checkpoint', position=offset)
+                checkpoint_progress = tqdm(ncols=100, 
+                                        desc='Saving Checkpoint',
+                                        position=offset)
                 tools.save_checkpoint(
                     {
                         'arch': args.model,
