@@ -311,7 +311,8 @@ if __name__ == '__main__':
 
                 # TODO put flow predicionts into TensorBoardX
                 
-            
+
+                """
                     
                 # Show the Pred flow in TensorBoard
                 pred_flow_0 = output[0, :, :, :]
@@ -339,7 +340,7 @@ if __name__ == '__main__':
 
                 writer.add_image('pred_flow', pred_flow_img_buf, 2)
                 writer.add_image('true_flow', true_flow_img, 2)
-
+                """
 
                 # Get loss values
                 loss_values = self.loss(output, target)
