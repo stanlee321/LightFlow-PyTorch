@@ -257,11 +257,11 @@ def flow_to_image(flow):
     u[idxUnknow] = 0
     v[idxUnknow] = 0
 
-    maxu = max(maxu, np.max(u))
-    minu = min(minu, np.min(u))
+    maxu = max(maxu, np.max(u), dim=1)
+    minu = min(minu, np.min(u), dim=1)
 
-    maxv = max(maxv, np.max(v))
-    minv = min(minv, np.min(v))
+    maxv = max(maxv, np.max(v), dim=1)
+    minv = min(minv, np.min(v), dim=1)
 
     rad = np.sqrt(u ** 2 + v ** 2)
     maxrad = max(-1, np.max(rad))

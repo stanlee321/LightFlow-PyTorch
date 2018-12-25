@@ -91,7 +91,8 @@ if __name__ == '__main__':
         'run inference (save flows to file) and every validation_frequency epoch'
     )
 
-    parser.add_argument('--inference', default=True, action='store_true')
+    parser.add_argument('--inference', action='store_true')
+    
     parser.add_argument(
         '--inference_size',
         type=int,
@@ -105,7 +106,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save_flow',
         action='store_true',
-        default=True,
         help='save predicted flows to file')
 
     parser.add_argument(
@@ -311,8 +311,6 @@ if __name__ == '__main__':
 
                 # TODO put flow predicionts into TensorBoardX
                 
-
-                """
                     
                 # Show the Pred flow in TensorBoard
                 pred_flow_0 = output[0, :, :, :]
@@ -340,7 +338,7 @@ if __name__ == '__main__':
 
                 writer.add_image('pred_flow', pred_flow_img_buf, 2)
                 writer.add_image('true_flow', true_flow_img, 2)
-                """
+
 
                 # Get loss values
                 loss_values = self.loss(output, target)
@@ -596,9 +594,9 @@ if __name__ == '__main__':
                 data, target = [d.cuda(async=True) for d in data], [
                     t.cuda(async=True) for t in target
                 ]
-            data, target = [Variable(d, volatile=True) for d in data], [
-                Variable(t, volatile=True) for t in target
-            ]
+            with torch.no_grad():
+                data, target = [ Variable(d) for d in data], [ Variable(t) for t in target ]
+            
 
             # when ground-truth flows are not available for inference_dataset,
             # the targets are set to all zeros. thus, losses are actually L1 or L2 norms of compute optical flows,
