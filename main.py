@@ -469,10 +469,8 @@ if __name__ == '__main__':
 
         last_log_time = progress._time()
         for batch_idx, (data, target) in enumerate(progress):
-
-            data, target = [Variable(d, volatile=is_validate) for d in data], [
-                Variable(t, volatile=is_validate) for t in target
-            ]
+            with torch.no_grad():
+                data, target = [Variable(d) for d in data], [Variable(t) for t in target ]
             if args.cuda and args.number_gpus == 1:
                 data, target = [d.cuda(async=True) for d in data], [
                     t.cuda(async=True) for t in target
