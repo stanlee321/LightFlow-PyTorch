@@ -333,8 +333,7 @@ if __name__ == '__main__':
 
 
 
-                    writer = SummaryWriter(comment='Images')
-
+                    writer = SummaryWriter(log_dir=osp.join(args.save, 'validation'), comment='Images')
 
                     writer.add_image('pred_flow', pred_flow_img_buf, 2)
                     writer.add_image('true_flow', true_flow_img, 2)
