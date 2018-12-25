@@ -20,7 +20,7 @@ import datasets
 import losses
 import model
 from utils import flow_utils, tools
-from .utils.flowlib import flow_to_image, gen_plot_buf
+from utils.flowlib import flow_to_image, gen_plot_buf
 
 # fp32 copy of parameters for update
 global param_copy
