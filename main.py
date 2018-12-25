@@ -86,7 +86,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--render_validation',
         action='store_true',
-        default=True,
         help=
         'run inference (save flows to file) and every validation_frequency epoch'
     )
