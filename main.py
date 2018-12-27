@@ -9,18 +9,18 @@ from tensorboardX import SummaryWriter
 
 import argparse
 import os
-import os.path as osp
 import subprocess
 import setproctitle
 import colorama
 import numpy as np
 from tqdm import tqdm
-
 import datasets
 import losses
 import model
 from utils import flow_utils, tools
 from utils.flowlib import flow_to_image, gen_plot_buf
+
+# from utils.tensorboard_log import TensorBoard
 
 # fp32 copy of parameters for update
 global param_copy
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--validation_frequency',
         type=int,
-        default=5,
+        default=1,
         help='validate every n epochs')
     parser.add_argument('--validation_n_batches', type=int, default=-1)
     parser.add_argument(
@@ -179,7 +179,7 @@ if __name__ == '__main__':
             'replicates': 1
         })
 
-    main_dir = osp.dirname(osp.realpath(__file__))
+    main_dir = os.path.dirname(os.path.realpath(__file__))
     print('main dir', main_dir)
     os.chdir(main_dir)
 
@@ -194,12 +194,11 @@ if __name__ == '__main__':
         # Print all arguments, color the non-defaults
         for argument, value in sorted(vars(args).items()):
             reset = colorama.Style.RESET_ALL
-            color = reset if value == defaults[
-                argument] else colorama.Fore.MAGENTA
+            color = reset if value == defaults[argument] else colorama.Fore.MAGENTA
             block.log('{}{}: {}{}'.format(color, argument, value, reset))
+    
         args.model_class = tools.module_to_dict(model)[args.model]
-        args.optimizer_class = tools.module_to_dict(
-            torch.optim)[args.optimizer]
+        args.optimizer_class = tools.module_to_dict(torch.optim)[args.optimizer]
         args.loss_class = tools.module_to_dict(losses)[args.loss]
 
         args.training_dataset_class = tools.module_to_dict(datasets)[
@@ -212,7 +211,7 @@ if __name__ == '__main__':
         args.cuda = not args.no_cuda and torch.cuda.is_available()
         args.current_hash = subprocess.check_output(
             ["git", "rev-parse", "HEAD"]).rstrip()
-        args.log_file = osp.join(args.save, 'args.txt')
+        args.log_file = os.path.join(args.save, 'args.txt')
 
         # dict to collect activation gradients (for training debug purpose)
         args.grads = {}
@@ -224,20 +223,26 @@ if __name__ == '__main__':
             args.inference_dir = "{}/inference".format(args.save)
 
     print('Source Code')
-    print('  Current Git Hash: {}\n'.format(args.current_hash))
+    print(' Current Git Hash: {}\n'.format(args.current_hash))
 
     # Change the title for `top` and `pkill` commands
     setproctitle.setproctitle(args.save)
 
     # Dynamically load the dataset class with parameters passed in via "--argument_[param]=[value]" arguments
     with tools.TimerBlock("Initializing Datasets") as block:
+
+        # BatchSize load
         args.effective_batch_size = args.batch_size
         args.batch_size = args.effective_batch_size // args.number_gpus
+        
+        # GPU
         gpuargs = {
             'num_workers': args.number_workers,
             'pin_memory': True
         } if args.cuda else {}
-        if osp.exists(args.training_dataset_root):
+
+        # If training and validation dataset paths exist.
+        if os.path.exists(args.training_dataset_root):
             train_dataset = args.training_dataset_class(
                 args, True, **tools.kwargs_from_args(args, 'training_dataset'))
             block.log('Training Dataset: {}'.format(args.training_dataset))
@@ -251,7 +256,7 @@ if __name__ == '__main__':
                 shuffle=True,
                 **gpuargs)
 
-        if osp.exists(args.validation_dataset_root):
+        if os.path.exists(args.validation_dataset_root):
             validation_dataset = args.validation_dataset_class(
                 args, True,
                 **tools.kwargs_from_args(args, 'validation_dataset'))
@@ -267,8 +272,9 @@ if __name__ == '__main__':
                 batch_size=args.effective_batch_size,
                 shuffle=False,
                 **gpuargs)
-
-        if osp.exists(args.inference_dataset_root):
+                
+        # If inference Path exists
+        if os.path.exists(args.inference_dataset_root):
             inference_dataset = args.inference_dataset_class(
                 args, False,
                 **tools.kwargs_from_args(args, 'inference_dataset'))
@@ -290,16 +296,21 @@ if __name__ == '__main__':
     with tools.TimerBlock("Building {} model".format(args.model)) as block:
 
         class ModelAndLoss(nn.Module):
+            """
+            Class for use Model And Loss jointly
+            """
             def __init__(self, args):
                 super(ModelAndLoss, self).__init__()
                 kwargs = tools.kwargs_from_args(args, 'model')
-                print(kwargs)
                 self.model = args.model_class(args, **kwargs)
                 kwargs = tools.kwargs_from_args(args, 'loss')
                 self.loss = args.loss_class(args, **kwargs)
 
             def forward(self, data, target, inference=False):
                 # Get the forward pass
+                print('Data shape', data.shape)
+                print('target Shape', target.shape)
+                
                 output = self.model(data)
 
                 #
@@ -308,54 +319,28 @@ if __name__ == '__main__':
                 output_size = (list(output.size())[2], list(output.size())[3])
                 target = F.interpolate(target, size=output_size, mode='nearest')
 
-                # TODO put flow predicionts into TensorBoardX
-                
-                """
-                    
-                # Show the Pred flow in TensorBoard
-                pred_flow_0 = output[0, :, :, :]
-                pred_flow_0 = flow_to_image(pred_flow_0)
-
-                pred_flow_1 = output[1, :, :, :]
-                pred_flow_1 = flow_to_image(pred_flow_1)
-                
-                pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
-
-                pred_flow_img_buf = gen_plot_buf(pred_flow_img)
-
-
-                # Flow the True Flow 
-                true_flow_0 = target[0, :, :, :]
-                true_flow_0 = flow_to_image(true_flow_0)
-
-                true_flow_1 = target[1, :, :, :]
-                true_flow_1 = flow_to_image(true_flow_1)
-                true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
-
-
-
-                writer = SummaryWriter(log_dir=osp.join(args.save, 'validation'), comment='Images')
-
-                writer.add_image('pred_flow', pred_flow_img_buf, 2)
-                writer.add_image('true_flow', true_flow_img, 2)
-
-                """
                 # Get loss values
                 loss_values = self.loss(output, target)
 
                 if not inference:
-                    return loss_values
+                    return loss_values, output
                 else:
                     return loss_values, output
 
+        # Instantiate ModelAndLoss class
         model_and_loss = ModelAndLoss(args)
 
+        # Batch size to work on
         block.log('Effective Batch Size: {}'.format(args.effective_batch_size))
+
+        # Calculate the number of trainable parameters
         block.log('Number of parameters: {}'.format(
-            sum([
-                p.data.nelement() if p.requires_grad else 0
-                for p in model_and_loss.parameters()
-            ])))
+                sum([
+                    p.data.nelement() if p.requires_grad else 0
+                    for p in model_and_loss.parameters()
+                ])
+            )
+        )
 
         # assing to cuda or wrap with dataparallel, model and loss
         if args.cuda and (args.number_gpus > 0) and args.fp16:
@@ -384,7 +369,7 @@ if __name__ == '__main__':
             torch.manual_seed(args.seed)
 
         # Load weights if needed, otherwise randomly initialize
-        if args.resume and osp.isfile(args.resume):
+        if args.resume and os.path.isfile(args.resume):
             block.log("Loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
             if not args.inference:
@@ -402,19 +387,23 @@ if __name__ == '__main__':
         else:
             block.log("Random initialization")
 
+        # Create save directory
         block.log("Initializing save directory: {}".format(args.save))
-        if not osp.exists(args.save):
+        if not os.path.exists(args.save):
             os.makedirs(args.save)
 
+        # Log to tensorboard
         train_logger = SummaryWriter(
-            log_dir=osp.join(args.save, 'train'), comment='training')
+            log_dir=os.path.join(args.save, 'train'), comment='training')
         validation_logger = SummaryWriter(
-            log_dir=osp.join(args.save, 'validation'), comment='validation')
+            log_dir=os.path.join(args.save, 'validation'), comment='validation')
 
     # Dynamically load the optimizer with parameters passed in via "--optimizer_[param]=[value]" arguments
-    with tools.TimerBlock(
-            "Initializing {} Optimizer".format(args.optimizer)) as block:
+    with tools.TimerBlock("Initializing {} Optimizer".format(args.optimizer)) as block:
+        
         kwargs = tools.kwargs_from_args(args, 'optimizer')
+
+        # Load optimizer
         if args.fp16:
             optimizer = args.optimizer_class(
                 filter(lambda p: p.requires_grad, param_copy), **kwargs)
@@ -422,6 +411,7 @@ if __name__ == '__main__':
             optimizer = args.optimizer_class(
                 filter(lambda p: p.requires_grad, model_and_loss.parameters()),
                 **kwargs)
+
         for param, default in kwargs.items():
             block.log("{} = {} ({})".format(param, default, type(default)))
 
@@ -429,16 +419,8 @@ if __name__ == '__main__':
     for argument, value in sorted(vars(args).items()):
         block.log2file(args.log_file, '{}: {}'.format(argument, value))
 
-    # Reusable function for training and validataion
-    def train(args,
-              epoch,
-              start_iteration,
-              data_loader,
-              model,
-              optimizer,
-              logger,
-              is_validate=False,
-              offset=0):
+    # Reusable function for Train and Validataion
+    def train(args, epoch, start_iteration, data_loader, model, optimizer, logger, is_validate=False, offset=0):
         statistics = []
         total_loss = 0
 
@@ -469,17 +451,21 @@ if __name__ == '__main__':
 
         last_log_time = progress._time()
         for batch_idx, (data, target) in enumerate(progress):
+
             with torch.no_grad():
                 data, target = [Variable(d) for d in data], [Variable(t) for t in target ]
+
             if args.cuda and args.number_gpus == 1:
-                data, target = [d.cuda(async=True) for d in data], [
-                    t.cuda(async=True) for t in target
-                ]
+                data, target = [d.cuda(async=True) for d in data], [t.cuda(async=True) for t in target]
 
             optimizer.zero_grad() if not is_validate else None
-            losses = model(data[0], target[0])
+
+            losses, output = model(data[0], target[0])
             losses = [torch.mean(loss_value) for loss_value in losses]
-            loss_val = losses[0]  # Collect first loss for weight update
+            
+            # Collect first loss for weight update
+            loss_val = losses[0]
+            
             total_loss += loss_val.data[0]
             loss_values = [v.data[0] for v in losses]
 
@@ -491,15 +477,15 @@ if __name__ == '__main__':
             if not is_validate and args.fp16:
                 loss_val.backward()
                 if args.gradient_clip:
-                    torch.nn.utils.clip_grad_norm(model.parameters(),
-                                                  args.gradient_clip)
+                    torch.nn.utils.clip_grad_norm(model.parameters(), args.gradient_clip)
 
                 params = list(model.parameters())
+
                 for i in range(len(params)):
-                    param_copy[i].grad = params[i].grad.clone().type_as(
-                        params[i]).detach()
+                    param_copy[i].grad = params[i].grad.clone().type_as(params[i]).detach()
                     param_copy[i].grad.mul_(1. / args.loss_scale)
                 optimizer.step()
+
                 for i in range(len(params)):
                     params[i].data.copy_(param_copy[i].data)
 
@@ -513,8 +499,7 @@ if __name__ == '__main__':
             # Update hyperparameters if needed
             global_iteration = start_iteration + batch_idx
             if not is_validate:
-                tools.update_hyperparameter_schedule(
-                    args, epoch, global_iteration, optimizer)
+                tools.update_hyperparameter_schedule( args, epoch, global_iteration, optimizer)
                 loss_labels.append('lr')
                 loss_values.append(optimizer.param_groups[0]['lr'])
 
@@ -523,16 +508,17 @@ if __name__ == '__main__':
 
             # Print out statistics
             statistics.append(loss_values)
-            title = '{} Epoch {}'.format('Validating'
-                                         if is_validate else 'Training', epoch)
+            title = '{} Epoch {}'.format('Validating' if is_validate else 'Training', epoch)
 
-            progress.set_description(title + ' ' +
-                                     tools.format_dictionary_of_losses(
-                                         loss_labels, statistics[-1]))
+            progress.set_description(title + ' ' + tools.format_dictionary_of_losses(loss_labels,
+                                                                                    statistics[-1])
+            )
 
-            if ((((global_iteration + 1) % args.log_frequency) == 0
-                 and not is_validate) or
-                (is_validate and batch_idx == args.validation_n_batches - 1)):
+            if (
+                (((global_iteration + 1) % args.log_frequency) == 0 and not is_validate) 
+                or  
+                (is_validate and batch_idx == args.validation_n_batches - 1)
+                ):
 
                 global_iteration = global_iteration if not is_validate else start_iteration
 
@@ -540,6 +526,7 @@ if __name__ == '__main__':
                                   len(statistics) /
                                   (progress._time() - last_log_time),
                                   global_iteration)
+
                 last_log_time = progress._time()
 
                 all_losses = np.array(statistics)
@@ -550,6 +537,28 @@ if __name__ == '__main__':
                                       global_iteration)
                     logger.add_histogram(
                         str(key), all_losses[:, i], global_iteration)
+                
+                # Tensorboard Viz
+                # Show the Pred flow in TensorBoard
+                pred_flow_0 = output[0].numpy().transpose((1,2,0))
+                pred_flow_0 = flow_to_image(pred_flow_0)
+
+                pred_flow_1 = output[1].numpy().transpose((1,2,0))
+                pred_flow_1 = flow_to_image(pred_flow_1)
+
+                pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
+                pred_flow_img_buf = gen_plot_buf(pred_flow_img)
+
+                # Flow the True Flow 
+                true_flow_0 = target[0]
+                true_flow_0 = flow_to_image(true_flow_0)
+
+                true_flow_1 = target[1]
+                true_flow_1 = flow_to_image(true_flow_1)
+                true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
+
+                logger.add_image('pred_flow', pred_flow_img_buf, 2)
+                logger.add_image('true_flow', true_flow_img, 2)
 
             # Reset Summary
             statistics = []
@@ -572,7 +581,7 @@ if __name__ == '__main__':
         if args.save_flow or args.render_validation:
             flow_folder = "{}/{}.epoch-{}-flow-field".format(
                 args.inference_dir, args.name.replace('/', '.'), epoch)
-            if not osp.exists(flow_folder):
+            if not os.path.exists(flow_folder):
                 os.makedirs(flow_folder)
 
         args.inference_n_batches = np.inf if args.inference_n_batches < 0 else args.inference_n_batches
@@ -599,6 +608,7 @@ if __name__ == '__main__':
             # when ground-truth flows are not available for inference_dataset,
             # the targets are set to all zeros. thus, losses are actually L1 or L2 norms of compute optical flows,
             # depending on the type of loss norm passed in
+
             losses, output = model(data[0], target[0], inference=True)
 
             losses = [torch.mean(loss_value) for loss_value in losses]
@@ -614,10 +624,7 @@ if __name__ == '__main__':
             if args.save_flow or args.render_validation:
                 for i in range(args.inference_batch_size):
                     _pflow = output[i].data.cpu().numpy().transpose(1, 2, 0)
-                    flow_utils.writeFlow(
-                        osp.join(flow_folder, '%06d.flo' %
-                             (batch_idx * args.inference_batch_size + i)),
-                        _pflow)
+                    flow_utils.writeFlow( os.path.join(flow_folder, '%06d.flo' % (batch_idx * args.inference_batch_size + i)), _pflow )
 
             progress.set_description(
                 'Inference Averages for Epoch {}: '.format(epoch) +
@@ -646,32 +653,36 @@ if __name__ == '__main__':
     global_iteration = 0
 
     for epoch in progress:
-        if args.inference or (args.render_validation and
-                              ((epoch - 1) % args.validation_frequency) == 0):
-            stats = inference(
-                args=args,
-                epoch=epoch - 1,
-                data_loader=inference_loader,
-                model=model_and_loss,
-                offset=offset)
-            offset += 1
 
-        if not args.skip_validation and (
-            (epoch - 1) % args.validation_frequency) == 0:
+        # Inference
+        if args.inference or (args.render_validation and ((epoch - 1) % args.validation_frequency) == 0):
+            stats = inference(
+                                args=args,
+                                epoch=epoch - 1,
+                                data_loader=inference_loader,
+                                model=model_and_loss,
+                                offset=offset
+                            )
+            offset += 1
+        
+        # Validate
+        if not args.skip_validation and ((epoch - 1) % args.validation_frequency) == 0:
             validation_loss, _ = train(
-                args=args,
-                epoch=epoch - 1,
-                start_iteration=global_iteration,
-                data_loader=validation_loader,
-                model=model_and_loss,
-                optimizer=optimizer,
-                logger=validation_logger,
-                is_validate=True,
-                offset=offset)
+                                        args=args,
+                                        epoch=epoch - 1,
+                                        start_iteration=global_iteration,
+                                        data_loader=validation_loader,
+                                        model=model_and_loss,
+                                        optimizer=optimizer,
+                                        logger=validation_logger,
+                                        is_validate=True,
+                                        offset=offset
+                                )
             offset += 1
 
             is_best = False
             if validation_loss < best_err:
+                print('Found best checkpoint...')
                 best_err = validation_loss
                 is_best = True
 
@@ -693,16 +704,18 @@ if __name__ == '__main__':
             checkpoint_progress.close()
             offset += 1
 
+        # Train
         if not args.skip_training:
             train_loss, iterations = train(
-                args=args,
-                epoch=epoch,
-                start_iteration=global_iteration,
-                data_loader=train_loader,
-                model=model_and_loss,
-                optimizer=optimizer,
-                logger=train_logger,
-                offset=offset)
+                                            args=args,
+                                            epoch=epoch,
+                                            start_iteration=global_iteration,
+                                            data_loader=train_loader,
+                                            model=model_and_loss,
+                                            optimizer=optimizer,
+                                            logger=train_logger,
+                                            offset=offset
+                                    )
             global_iteration += iterations
             offset += 1
 
@@ -729,3 +742,11 @@ if __name__ == '__main__':
                                 progress._time() - last_epoch_time, epoch)
         last_epoch_time = progress._time()
     print("\n")
+
+
+"""
+# TODO put flow predicionts into TensorBoardX
+
+
+
+"""

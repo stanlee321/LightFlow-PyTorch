@@ -31,6 +31,91 @@ note that one step = one batch of data processed, ~not~ an entire epoch
 },
 """
 
+
+
+
+TRAINING_CONFIGS = {
+    'START_EPOCH': 1,
+    'TOTAL_EPOCHS': 10000,
+    'BATCH_SIZE': 8,
+    'TRAIN_N_BATCHES': -1,          # 'Number of min-batches per epoch. If < 0, it will be determined by training_dataloader'
+    'CROP_SIZE': [384,512],         # [256, 256], #"Spatial dimension to crop training samples for training"
+    'SCHEDULE_LR_FRECUENCY': 0,     # in number of iterations (0 for no schedule)'
+    'SCHEDULE_LR_FRACTION': 10,
+    'RGB_MAX': 255.,
+    'NUMBER_WORKERS': 4,
+    'NUMBER_GPUS': 1,
+    'NO_CUDA': False,
+    'SEED': 1,
+    'NAME': 'run',                  # a name to append to the save directory
+    'SAVE': './work',
+    'VALIDATION_FRECUENCY': 5,      # Validate every n epochs
+    'RENDER_VALIDATION': False,     # 'run inference (save flows to file) and every validation_frequency epoch'
+    'INFERENCE': False,
+    'INFERENCE_SIZE': [-1, -1],     #'spatial size divisible by 64. default (-1,-1) - largest possible valid size would be used'
+    'INFERENCE_BATCH_SIZE': 1,
+    'INFERENCE_N_BATCHES': -1,
+    'SAVE_FLOW': False,              # Save predicted flows to file
+    'RESUME': './work/LightFlow_train-checkpoint.pth.tar', # path to latest checkpoint (default: none)
+    'LOG_FRECUENCY': 10,
+    'SUMM_ITER': 10,                 # Log every n batches
+    'SKIP_TRANING': False,           # 
+    'SKIP_VALIDATION': False,
+    'FP16': False,                   #Run model in pseudo-fp16 mode (fp16 storage fp32 math).'
+    'FP16_SCALE': 1024.,             #Loss scaling, positive power of 2 values can improve fp16 convergence.
+}
+
+MODEL_CONFIGS = {
+    'MODEL': 'LightFlow',
+    'LOSS': 'L1Loss',               #L2Loss
+    'OPTIMIZER': {
+        'default': 'Adam',
+        'skip_params': 'params',
+        'parameter_defaults': {'weight_decay': 0.00004}
+    },
+    'TRAINING_DATASET': {
+        'default': 'MpiSintelFinal',
+        'skip_params': ['is_cropped'],
+        'parameter_defaults': {'root': './MPI-Sintel/flow/training'}
+    },
+    'VALIDATION_DATASET': {
+        'default': 'MpiSintelClean',
+        'skip_params': ['is_cropped'],
+        'parameter_defaults': {
+            'root': './MPI-Sintel/flow/training',
+            'replicates':1
+        }
+    },
+    'INFERENCE_DATASET': {
+        'default': 'MpiSintelClean',
+        'skip_params': ['is_cropped'],
+        'parameter_defaults': {
+            'root': './MPI-Sintel/flow/training',
+            'replicates':1
+        }
+    }
+                
+
+}
+
+
+
+DATASET_CONFIG = {
+    'IMAGE_HEIGHT': 384,
+    'IMAGE_WIDTH': 512,
+    'ITEMS_TO_DESCRIPTIONS': {
+        'image_a': 'A 3-channel image.',
+        'image_b': 'A 3-channel image.',
+        'flow': 'A 2-channel optical flow field',
+    },
+    'SIZES': {
+        'train': 22232,
+        'validate': 640,
+        'sample': 8,
+    },
+}
+
+
 FLYING_CHAIRS_DATASET_CONFIG = {
     'IMAGE_HEIGHT': 384,
     'IMAGE_WIDTH': 512,
