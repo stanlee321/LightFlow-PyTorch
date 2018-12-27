@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
         class ModelAndLoss(nn.Module):
             """
-            Class for use Model And Loss jointly
+            Class for use Model And Loss jointly for train/val
             """
             def __init__(self, args):
                 super(ModelAndLoss, self).__init__()
@@ -310,7 +310,7 @@ if __name__ == '__main__':
                 # Get the forward pass
                 print('Data shape', data.shape)
                 print('target Shape', target.shape)
-                
+
                 output = self.model(data)
 
                 #
