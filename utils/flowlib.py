@@ -449,6 +449,8 @@ def compute_color(u, v):
     :param v: optical flow vertical map
     :return: optical flow in color code
     """
+    print('u shape', u.shape)
+    print('vshape', v.shape)
     [h, w] = u.shape
     img = np.zeros([h, w, 3])
     nanIdx = np.isnan(u) | np.isnan(v)
