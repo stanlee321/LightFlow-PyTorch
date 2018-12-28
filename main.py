@@ -552,7 +552,9 @@ if __name__ == '__main__':
                 pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
                 pred_flow_img_buf = gen_plot_buf(pred_flow_img)
 
-                # Flow the True Flow 
+                # Flow the True Flow
+                print('true flow process')
+                print('target shape', target.shape)
                 true_flow_0 = target
                 true_flow_0 = flow_to_image(true_flow_0)
 

@@ -245,6 +245,7 @@ def flow_to_image(flow):
     :param flow: optical flow map
     :return: optical flow image in middlebury color
     """
+    print('flow to image shape', flow.shape)
     u = flow[:, :, 0]
     v = flow[:, :, 1]
 
