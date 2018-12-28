@@ -309,7 +309,7 @@ if __name__ == '__main__':
             def forward(self, data, target, inference=False):
                 # Get the forward pass
                 print('Data shape', data.shape)
-                print('target Shape', target.shape)
+                print('target Shae', target.shape)
 
                 output = self.model(data)
 
@@ -553,10 +553,10 @@ if __name__ == '__main__':
                 pred_flow_img_buf = gen_plot_buf(pred_flow_img)
 
                 # Flow the True Flow 
-                true_flow_0 = target[0]
+                true_flow_0 = target
                 true_flow_0 = flow_to_image(true_flow_0)
 
-                true_flow_1 = target[0]
+                true_flow_1 = target
                 true_flow_1 = flow_to_image(true_flow_1)
                 true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
 
