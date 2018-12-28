@@ -537,22 +537,21 @@ if __name__ == '__main__':
                 
                 # Tensorboard Viz
                 # Show the Pred flow in TensorBoard
+                """
                 print('OUTPUT SHAPE', output[0].shape)
                 with torch.no_grad():
                     pred_flow_0 =  Variable(output).cpu().data
                 pred_flow_0 = pred_flow_0[0].numpy().transpose((1,2,0))
                 pred_flow_0 = flow_to_image(pred_flow_0)
-                """
                 pred_flow_1 = output[0].detach().cpu().data
                 pred_flow_1 = pred_flow_1.numpy().transpose((1,2,0))
                 pred_flow_1 = flow_to_image(pred_flow_1)
-                """
+
 
                 pred_flow_img = np.stack([pred_flow_0, pred_flow_0], 0)
                 pred_flow_img_buf = gen_plot_buf(pred_flow_img)
                 logger.add_image('pred_flow', pred_flow_img_buf, 2)
 
-                """
                 # Flow the True Flow
                 print('true flow process')
                 print('target shape', target[0].shape)
