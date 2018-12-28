@@ -308,9 +308,6 @@ if __name__ == '__main__':
 
             def forward(self, data, target, inference=False):
                 # Get the forward pass
-                print('Data shape', data.shape)
-                print('target Shae', target.shape)
-
                 output = self.model(data)
 
                 #
@@ -544,14 +541,17 @@ if __name__ == '__main__':
                 pred_flow_0 = output[0].detach().cpu().data
                 pred_flow_0 = pred_flow_0.numpy().transpose((1,2,0))
                 pred_flow_0 = flow_to_image(pred_flow_0)
-
+                """
                 pred_flow_1 = output[0].detach().cpu().data
                 pred_flow_1 = pred_flow_1.numpy().transpose((1,2,0))
                 pred_flow_1 = flow_to_image(pred_flow_1)
+                """
 
-                pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
+                pred_flow_img = np.stack([pred_flow_0, pred_flow_0], 0)
                 pred_flow_img_buf = gen_plot_buf(pred_flow_img)
+                logger.add_image('pred_flow', pred_flow_img_buf, 2)
 
+                """
                 # Flow the True Flow
                 print('true flow process')
                 print('target shape', target[0].shape)
@@ -564,8 +564,8 @@ if __name__ == '__main__':
                 true_flow_1 = flow_to_image(true_flow_1)
                 true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
 
-                logger.add_image('pred_flow', pred_flow_img_buf, 2)
                 logger.add_image('true_flow', true_flow_img, 2)
+                """
 
             # Reset Summary
             statistics = []
