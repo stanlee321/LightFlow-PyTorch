@@ -281,10 +281,10 @@ def flow_to_image(flow):
 
 
 def gen_plot_buf(image):
-    print('image shape', image.shape)
+    print('image shape', image[0].shape)
     """Create a pyplot plot and save to buffer."""
     plt.figure()
-    plt.plot(image)
+    plt.plot(image[0])
     plt.title("test")
     buf = io.BytesIO()
     plt.savefig(buf, format='jpeg')
