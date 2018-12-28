@@ -540,10 +540,10 @@ if __name__ == '__main__':
                 
                 # Tensorboard Viz
                 # Show the Pred flow in TensorBoard
-                pred_flow_0 = output[0].numpy().transpose((1,2,0))
+                pred_flow_0 = output[0].detach().numpy().transpose((1,2,0))
                 pred_flow_0 = flow_to_image(pred_flow_0)
 
-                pred_flow_1 = output[1].numpy().transpose((1,2,0))
+                pred_flow_1 = output[1].detach().numpy().transpose((1,2,0))
                 pred_flow_1 = flow_to_image(pred_flow_1)
 
                 pred_flow_img = np.stack([pred_flow_0, pred_flow_1], 0)
