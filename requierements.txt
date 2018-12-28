@@ -13,3 +13,4 @@ setproctitle
 pytz
 protobuf
 pypng
+setproctitle
