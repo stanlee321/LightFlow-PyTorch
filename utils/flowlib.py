@@ -284,7 +284,7 @@ def gen_plot_buf(image):
     print('image shape', image[0].shape)
     """Create a pyplot plot and save to buffer."""
     plt.figure()
-    plt.plot(image[0])
+    plt.plot(image[0,:,:,0])
     plt.title("test")
     buf = io.BytesIO()
     plt.savefig(buf, format='jpeg')
