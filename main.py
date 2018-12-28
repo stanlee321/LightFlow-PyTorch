@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
         class ModelAndLoss(nn.Module):
             """
-            Class for use Model And Loss jointly for train/val
+            Class for use Model And Loss jointly for train/val/evaluation
             """
             def __init__(self, args):
                 super(ModelAndLoss, self).__init__()
