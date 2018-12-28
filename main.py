@@ -540,11 +540,12 @@ if __name__ == '__main__':
                 
                 # Tensorboard Viz
                 # Show the Pred flow in TensorBoard
+                print('OUTPUT SHAPE', output.shape)
                 pred_flow_0 = output[0].detach().cpu().data
                 pred_flow_0 = pred_flow_0.numpy().transpose((1,2,0))
                 pred_flow_0 = flow_to_image(pred_flow_0)
 
-                pred_flow_1 = output[1].detach().cpu().data
+                pred_flow_1 = output[0].detach().cpu().data
                 pred_flow_1 = pred_flow_1.numpy().transpose((1,2,0))
                 pred_flow_1 = flow_to_image(pred_flow_1)
 
@@ -555,7 +556,7 @@ if __name__ == '__main__':
                 true_flow_0 = target[0]
                 true_flow_0 = flow_to_image(true_flow_0)
 
-                true_flow_1 = target[1]
+                true_flow_1 = target[0]
                 true_flow_1 = flow_to_image(true_flow_1)
                 true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
 
