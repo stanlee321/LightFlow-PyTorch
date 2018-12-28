@@ -281,7 +281,7 @@ def flow_to_image(flow):
 
 
 def gen_plot_buf(image):
-    
+    print('image shape', image.shape)
     """Create a pyplot plot and save to buffer."""
     plt.figure()
     plt.plot(image)

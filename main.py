@@ -548,7 +548,7 @@ if __name__ == '__main__':
                 pred_flow_1 = flow_to_image(pred_flow_1)
                 """
 
-                pred_flow_img = np.stack([pred_flow_0[0], pred_flow_0[1]], 0)
+                pred_flow_img = np.stack([pred_flow_0, pred_flow_0], 0)
                 pred_flow_img_buf = gen_plot_buf(pred_flow_img)
                 logger.add_image('pred_flow', pred_flow_img_buf, 2)
 
