@@ -280,8 +280,8 @@ def flow_to_image(flow):
     return np.uint8(img)
 
 
-def gen_plot_buf(flow):
-    image = flow_to_image(flow)
+def gen_plot_buf(image):
+    
     """Create a pyplot plot and save to buffer."""
     plt.figure()
     plt.plot(image)
