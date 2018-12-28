@@ -554,11 +554,13 @@ if __name__ == '__main__':
 
                 # Flow the True Flow
                 print('true flow process')
-                print('target shape', target.shape)
-                true_flow_0 = target
+                print('target shape', target[0].shape)
+                true_flow_0 = target[0].cpu().data
+                true_flow_0 = true_flow_0.numpy().transpose((1,2,0))
                 true_flow_0 = flow_to_image(true_flow_0)
 
-                true_flow_1 = target
+                true_flow_1 = target[0].cpu().data
+                true_flow_1 = true_flow_1.numpy().transpose((1,2,0))
                 true_flow_1 = flow_to_image(true_flow_1)
                 true_flow_img = np.stack([true_flow_0, true_flow_1], 0)
 
