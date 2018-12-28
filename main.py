@@ -537,9 +537,10 @@ if __name__ == '__main__':
                 
                 # Tensorboard Viz
                 # Show the Pred flow in TensorBoard
-                print('OUTPUT SHAPE', output.shape)
-                pred_flow_0 = output[0].detach().cpu().data
-                pred_flow_0 = pred_flow_0.numpy().transpose((1,2,0))
+                print('OUTPUT SHAPE', output[0].shape)
+                with torch.no_grad():
+                    pred_flow_0 =  Variable(output).cpu().data
+                pred_flow_0 = pred_flow_0[0].numpy().transpose((1,2,0))
                 pred_flow_0 = flow_to_image(pred_flow_0)
                 """
                 pred_flow_1 = output[0].detach().cpu().data
